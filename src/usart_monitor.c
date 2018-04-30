@@ -71,7 +71,7 @@ void usart_monitor_init(void) {
 /**
  * @brief 串口监控发送数据.
  */
-void usart_monitor_send(const uint8_t * buf, uint8_t size) {
+void usart_monitor_send(const void * buf, uint8_t size) {
     USART1->CR1 &= (uint16_t) ~(USART_FLAG_TXE);                   /* Disable the UART Transmit interrupt */
 
     tx_len = size > sizeof(tr_buf) ? sizeof(tr_buf) : size;

@@ -72,9 +72,9 @@ void TIM4_IRQHandler(void) {
     tsr = TIM4->SR;	
 
     // 溢出中断
-    if(tsr&0X0001) {
+    if (tsr & 0x0001) {
     }				   
-    TIM4->SR &= ~(1<<0);//清除中断标志位 	 
+    TIM4->SR &= (uint16_t) ~(1<<0);//清除中断标志位 	 
 }
 
 uint16_t get_encoder_count(void) {
