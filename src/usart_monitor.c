@@ -27,7 +27,6 @@ void usart_monitor_init(void) {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 	USART_ClockInitTypeDef USART_ClockInitStructure; 	
-    NVIC_InitTypeDef NVIC_InitStructure;  
 
 	/* config USART clock */
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);
@@ -58,13 +57,6 @@ void usart_monitor_init(void) {
     USART_ClockInit(USART1, &USART_ClockInitStructure);  
 	USART_Init(USART1, &USART_InitStructure );   
 
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
-    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;  
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;  
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  
-    NVIC_Init(&NVIC_InitStructure); 
-	
     USART_Cmd(USART1, ENABLE);
 }
 

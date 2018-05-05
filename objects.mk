@@ -10,6 +10,7 @@ C_INCS += \
 	-I"system/inc/stm32f1-stdperiph"
 
 C_SRCS += \
+src/nvic.c \
 src/wrio.c \
 src/led.c \
 src/car.c \
@@ -19,7 +20,8 @@ src/oled.c \
 src/pwm.c \
 src/encoder.c \
 src/stimer.c \
-src/usart_monitor.c 
+src/usart_monitor.c \
+src/pid.c 
 
 C_SRCS += \
 system/src/cmsis/system_stm32f10x.c \

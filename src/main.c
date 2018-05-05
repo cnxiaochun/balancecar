@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "stimer.h"
 #include "wrio.h"
+#include "nvic.h"
 #include "usart_monitor.h"
 #include "psx.h"
 #include "car.h"
@@ -22,6 +23,7 @@ int main(int argc, char* argv[]) {
 
     /**********************/
     /* 初始化             */
+    nvic_init();
     stimer_init();
     wrio_init();
     usart_monitor_init();
@@ -59,7 +61,7 @@ int main(int argc, char* argv[]) {
 
         if (StimerCheck(TIMER_ENCODER)) {
             StimerRun(TIMER_ENCODER, ms2tick(1000));
-            encoder = get_encoder_count();
+            encoder = get_encoder_l_count();
             usart_monitor_send(&encoder, sizeof(encoder));
         }
     }
