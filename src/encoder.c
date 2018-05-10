@@ -139,23 +139,44 @@ static uint16_t encoder_left;
 static uint16_t encoder_right;
 
 
+static int16_t encoder_speed(uint16_t current, uint16_t last) {
+    int16_t result;
+    if (current >= last) {
+        result = current - last;
+    }
+    else {
+        result = last - current;
+        if (result > ENCODER_MAX_VALUE / 2) {
+            /* 溢出了 */
+            result = ENCODER_MAX_VALUE - value;
+        }
+        else {
+            result = -result;
+        }
+    }
+    return result;
+}
+
 /**
  * @brief 编码器读取任务.
  *
  * 周期: 5ms
  */
-void on_encoder_task(void) {
+void on_encoder_task(int16_t *speed_l, int16_t *speed_r) {
     uint16_t value;
+    int16_t speed;
 
     /* 左轮 */
     value = get_encoder_count(ENCODER_L_TIM);
+    speed = encoder_speed(value, encoder_left);
+    encoder_left = value;
+    if (speed_l) *speed_l = speed;
 
-    if (value > encoder_left) {
-
-    }
-    else {
-    }
-
+    /* 右轮 */
+    value = get_encoder_count(ENCODER_R_TIM);
+    speed = encoder_speed(value, encoder_right);
+    encoder_right = value;
+    if (speed_r) *speed_r = speed;
 }
 
 uint16_t get_encoder_l_count(void) {
