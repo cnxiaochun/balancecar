@@ -63,10 +63,10 @@ void usart_monitor_init(void) {
 /**
  * @brief 串口监控发送数据.
  */
-void usart_monitor_send(const void * buf, uint8_t size) {
+void usart_monitor_send(const void * buf, size_t size) {
     USART1->CR1 &= (uint16_t) ~(USART_FLAG_TXE);                   /* Disable the UART Transmit interrupt */
 
-    tx_len = size > sizeof(tr_buf) ? sizeof(tr_buf) : size;
+    tx_len = (uint8_t) (size > sizeof(tr_buf) ? sizeof(tr_buf) : size);
     memcpy(tr_buf, buf, tx_len);
     tx_pos = 0;
 
@@ -76,16 +76,33 @@ void usart_monitor_send(const void * buf, uint8_t size) {
     (void) USART1->DR;
 
      USART1->CR1 |= USART_FLAG_TXE;                      /* Enable the UART Transmit interrupt */
-
-    //USART_SendData(USART1, 'A');
-    // USART1->DR = 'A';
 }
 
 /**
  * @brief 串口监控发送字符串.
  */
 void usart_monitor_send_str(const char * buf) {
-    usart_monitor_send((const uint8_t *) buf, (uint8_t) strlen(buf));
+    usart_monitor_send((const uint8_t *) buf, strlen(buf));
+}
+
+/**
+ * @brief 串口监控发送图表数据.
+ */
+void usart_monitor_send_chart(const void * buf, size_t size) {
+    USART1->CR1 &= (uint16_t) ~(USART_FLAG_TXE);                   /* Disable the UART Transmit interrupt */
+
+    tx_len = (uint8_t) (size > (sizeof(tr_buf) - 2) ? (sizeof(tr_buf) - 2) : size + 2);
+    tr_buf[0] = 0xAA;
+    tr_buf[1] = 0x55;
+    memcpy(&tr_buf[2], (const void *) buf, size);
+    tx_pos = 0;
+
+    /* Clear the Idle Line Detected bit in the status rerister by a read
+       to the UART1_SR register followed by a Read to the UART1_DR register */
+    (void) USART1->SR;
+    (void) USART1->DR;
+
+     USART1->CR1 |= USART_FLAG_TXE;                      /* Enable the UART Transmit interrupt */
 }
 
 /**

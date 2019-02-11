@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "stimer.h"
+#include "systick.h"
 #include "wrio.h"
 #include "nvic.h"
 #include "usart_monitor.h"
@@ -16,33 +18,29 @@ static void handle_psx(void);
 
 // Cope with warnings. Please note the related line at
 // the end of this function, used to pop the compiler diagnostics status.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 int main(int argc, char* argv[]) {
-    uint16_t encoder;
+    (void) argc;
+    (void) argv;
+
+    int16_t encoder;
+    int16_t buf[16];
 
     /**********************/
     /* 初始化             */
     nvic_init();
-    stimer_init();
+    systick_init();
     wrio_init();
     usart_monitor_init();
     psx_init();
     car_init();
     pwm_init();
-    // oled_I2C_Configuration();
-
-    /* oled屏需要开机后50ms再初始化 */
-    StimerRun(TIMER_PSX, ms2tick(50));
-
-    usart_monitor_send("Hello\n", 6);
-
-    while (!StimerCheck(TIMER_PSX)) ;
-
     encoder_init();
 
+    // oled_I2C_Configuration();
+    /* oled屏需要开机后50ms再初始化 */
+    StimerRun(TIMER_PSX, ms2tick(50));
+    while (!StimerCheck(TIMER_PSX)) ;
     //  oled_init();
-
     //  oled_fill(0xf0);
 
     /**********************/
@@ -60,13 +58,17 @@ int main(int argc, char* argv[]) {
         }
 
         if (StimerCheck(TIMER_ENCODER)) {
-            StimerRun(TIMER_ENCODER, ms2tick(1000));
-            encoder = get_encoder_l_count();
-            usart_monitor_send(&encoder, sizeof(encoder));
+            StimerRun(TIMER_ENCODER, ms2tick(500));
+            encoder = get_speed_left();
+            buf[0] = encoder;
+            encoder = get_speed_right();
+            buf[1] = encoder;
+            //itoa(encoder, buf, 10);
+            //strcat(buf, "\r\n");
+            usart_monitor_send_chart(buf, 4);
         }
     }
 }
-#pragma GCC diagnostic pop
 
 /**
  * @brief psx按键处理.
@@ -81,7 +83,7 @@ static void handle_psx(void) {
     /****************/
     /* 串口调试助手 */
     if (psx_changed()) {                    /* 如果有按键变化, 串口发送数据 */
-        usart_monitor_send(psx_buffer(), 9);
+        // usart_monitor_send(psx_buffer(), 9);
     }
 
     /***************/

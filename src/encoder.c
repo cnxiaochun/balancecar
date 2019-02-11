@@ -27,6 +27,7 @@
 #define ENCODER_R_PIN_B         STMIO_PA07
 
 #define ENCODER_MAX_VALUE       0x10000
+
 /**
  * @breif AB编码器初始化.
  *
@@ -81,7 +82,7 @@ void encoder_init(void) {
     // Reset counter
     ENCODER_L_TIM->CNT = 0;
   
-    TIM_Cmd(ENCODER_L_TIM, ENABLE);  	                    /* 使能定时器 */
+    TIM_Cmd(ENCODER_L_TIM, ENABLE);  	                /* 使能定时器 */
 
     /* Timer configuration in Encoder mode */
     TIM_DeInit(ENCODER_R_TIM);
@@ -120,12 +121,6 @@ static void on_tim_irq(TIM_TypeDef* TIMx) {
     TIMx->SR &= (uint16_t) ~(1 << 0);                   /* 清除中断标志位 */
 }
 
-static uint16_t get_encoder_count(TIM_TypeDef* TIMx) {
-    uint16_t result;
-    result = TIM_GetCounter(TIMx);                      /* TIMx定时器计算调用 */
-    return result;
-}
-
 void TIM4_IRQHandler(void) { 		    		  			    
     on_tim_irq(ENCODER_L_TIM);
 }
@@ -134,27 +129,37 @@ void TIM3_IRQHandler(void) {
     on_tim_irq(ENCODER_R_TIM);
 }
 
+static uint16_t get_encoder_count(TIM_TypeDef* TIMx) {
+    uint16_t result;
+    result = TIM_GetCounter(TIMx);                      /* TIMx定时器计算调用 */
+    return result;
+}
+
 static uint16_t encoder_left;
 
 static uint16_t encoder_right;
 
-
-static int16_t encoder_speed(uint16_t current, uint16_t last) {
-    int16_t result;
+static int16_t calc_speed(uint16_t current, uint16_t last) {
+    int32_t result;
     if (current >= last) {
         result = current - last;
+        if (result > ENCODER_MAX_VALUE / 2) {
+            /* 溢出了 */
+            result = ENCODER_MAX_VALUE - result;
+            result = -result;
+        }
     }
     else {
         result = last - current;
         if (result > ENCODER_MAX_VALUE / 2) {
             /* 溢出了 */
-            result = ENCODER_MAX_VALUE - value;
+            result = ENCODER_MAX_VALUE - result;
         }
         else {
             result = -result;
         }
     }
-    return result;
+    return (int16_t) result;
 }
 
 /**
@@ -162,27 +167,61 @@ static int16_t encoder_speed(uint16_t current, uint16_t last) {
  *
  * 周期: 5ms
  */
-void on_encoder_task(int16_t *speed_l, int16_t *speed_r) {
+static void on_encoder_task(int16_t *speed_l, int16_t *speed_r) {
     uint16_t value;
     int16_t speed;
 
     /* 左轮 */
     value = get_encoder_count(ENCODER_L_TIM);
-    speed = encoder_speed(value, encoder_left);
+    speed = calc_speed(value, encoder_left);
     encoder_left = value;
     if (speed_l) *speed_l = speed;
 
     /* 右轮 */
     value = get_encoder_count(ENCODER_R_TIM);
-    speed = encoder_speed(value, encoder_right);
+    speed = calc_speed(value, encoder_right);
     encoder_right = value;
     if (speed_r) *speed_r = speed;
 }
 
-uint16_t get_encoder_l_count(void) {
-    return get_encoder_count(ENCODER_L_TIM);
+static int16_t speed_l;
+
+static int16_t speed_r;
+
+static int16_t speed_l_buf[500 / 5];
+
+static int16_t speed_r_buf[500 / 5];
+
+static unsigned int speed_pos;
+
+void encoder_task(void) {
+    unsigned int i;
+    int32_t sl, sr;
+
+    on_encoder_task(&speed_l_buf[speed_pos], &speed_r_buf[speed_pos]);
+    if (speed_pos >= sizeof(speed_l_buf) /sizeof(speed_l_buf[0]) - 1) {
+        speed_pos = 0;
+    }
+    else {
+        speed_pos++;
+    }
+
+    sl = 0; sr = 0;
+    for (i = 0; i < sizeof(speed_l_buf) /sizeof(speed_l_buf[0]); i++) {
+        sl += speed_l_buf[i];
+        sr += speed_r_buf[i];
+    }
+    //sl /= (uint16_t)(sizeof(speed_l_buf) /sizeof(speed_l_buf[0]));
+    //sr /= (uint16_t)(sizeof(speed_r_buf) /sizeof(speed_r_buf[0]));
+    
+    speed_l = (int16_t) sl;
+    speed_r = (int16_t) sr;
 }
 
-uint16_t get_encoder_r_count(void) {
-    return get_encoder_count(ENCODER_R_TIM);
+int16_t get_speed_left(void) {
+    return speed_l;
+}
+
+int16_t get_speed_right(void) {
+    return speed_r;
 }

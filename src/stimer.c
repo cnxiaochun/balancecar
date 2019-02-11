@@ -29,11 +29,7 @@ int StimerIsRun(uint8_t stimer_id) {
     return (_OS_Stimers[stimer_id] & OS_STIMER_RUN_BIT) ? 1 : 0;
 }
 
-void stimer_init(void) {
-    SysTick_Config (SystemCoreClock / TIMER_FREQUENCY_HZ);
-}
-
-void SysTick_Handler(void) {
+void stimer_task(void) {
     /* 保证所有修改静态定时器的任务优先级不能高于此任务优先级 */
     #if OS_STIMERS > 0
     if(_OS_Stimers[0] & OS_STIMER_RUN_BIT) _OS_Stimers[0]++;

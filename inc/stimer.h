@@ -1,9 +1,6 @@
-#ifndef STIMER_H
-#define STIMER_H
+#pragma once
 
 #include <stdint.h>
-
-#define TIMER_FREQUENCY_HZ (1000u)
 
 #define OS_STIMERS 20                       /* 静态定时器数量 */
 
@@ -26,12 +23,9 @@ int StimerCheck(uint8_t stimer_id);
 
 int StimerIsRun(uint8_t stimer_id);
 
-void stimer_init(void);
-
-void SysTick_Handler(void);
+void stimer_task(void);
 
 static inline uint32_t ms2tick(uint32_t time) {
     return time;
 }
 
-#endif

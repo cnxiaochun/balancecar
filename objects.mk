@@ -13,6 +13,7 @@ C_SRCS += \
 src/nvic.c \
 src/wrio.c \
 src/led.c \
+src/systick.c \
 src/car.c \
 src/main.c \
 src/psx.c \

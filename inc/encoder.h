@@ -13,3 +13,8 @@ uint16_t get_encoder_l_count(void);
 
 uint16_t get_encoder_r_count(void);
 
+void encoder_task(void);
+
+int16_t get_speed_left(void);
+
+int16_t get_speed_right(void);
